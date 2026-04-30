@@ -10,7 +10,7 @@
 
 This project uses a Convolutional Neural Network (CNN) to detect the "Peacock Eye" disease (*Spilocaea oleagina*) on olive leaves. The model classifies leaves as either **Healthy** or **Infected** (Peacock Eye).
 
-The project includes two models:
+The project includes two models :
 - **Model 1**: Basic CNN architecture (simple Conv2D layers)
 - **Model 2**: Transfer Learning with MobileNetV2 (recommended - better accuracy)
 
