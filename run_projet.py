@@ -3,10 +3,9 @@ import numpy as np
 from tensorflow.keras.models import load_model
 
 # ================================
-# Charger le modèle
+# Charger le modèle utilisant load_model
 # ================================
 model = load_model("peacock_model2.h5")
-
 # ================================
 # Fonction de prédiction
 # ================================
