@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌿 Olive Leaf Disease Detector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f1a;
+      --surface:   #161929;
+      --card:      #1e2235;
+      --border:    #2a2f4a;
+      --accent:    #4ade80;
+      --accent2:   #22d3ee;
+      --danger:    #f87171;
+      --warn:      #fbbf24;
+      --text:      #e2e8f0;
+      --muted:     #94a3b8;
+      --radius:    16px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background gradient particles ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(74,222,128,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(34,211,238,.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative; z-index: 1;
+      padding: 28px 40px 22px;
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(22,25,41,.7);
+      backdrop-filter: blur(12px);
+    }
+    .logo { font-size: 2rem; }
+    .header-text h1 {
+      font-size: 1.4rem; font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-text p { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Main layout ── */
+    main {
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 0 auto;
+      padding: 36px 24px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 28px;
+    }
+    @media(max-width: 800px) { main { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card-title {
+      font-size: .75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--muted); margin-bottom: 18px;
+    }
+
+    /* ── Upload zone ── */
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 50px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s;
+      position: relative;
+    }
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(74,222,128,.05);
+    }
+    #drop-zone .upload-icon { font-size: 3rem; margin-bottom: 14px; }
+    #drop-zone p { color: var(--muted); font-size: .9rem; }
+    #drop-zone strong { color: var(--text); }
+    #file-input { display: none; }
+
+    /* ── Preview ── */
+    #preview-area { display: none; margin-top: 20px; }
+    #preview-img {
+      width: 100%; max-height: 340px;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Model selector ── */
+    .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .model-btn {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s;
+      color: var(--text);
+    }
+    .model-btn:hover { border-color: var(--accent2); }
+    .model-btn.active { border-color: var(--accent); background: rgba(74,222,128,.08); }
+    .model-btn .m-name { font-weight: 600; font-size: .85rem; }
+    .model-btn .m-acc  { font-size: .72rem; color: var(--muted); margin-top: 3px; }
+
+    /* ── Threshold sliders ── */
+    .slider-row { margin-bottom: 14px; }
+    .slider-label { display: flex; justify-content: space-between;
+                    font-size: .78rem; color: var(--muted); margin-bottom: 6px; }
+    input[type=range] {
+      width: 100%; accent-color: var(--accent); cursor: pointer;
+    }
+
+    /* ── Submit button ── */
+    #submit-btn {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none; border-radius: 10px;
+      color: #fff; font-size: .95rem; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    #submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,.3); }
+    #submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Result card ── */
+    #result-card { display: none; margin-top: 22px; }
+    .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .result-emoji  { font-size: 2.2rem; }
+    .result-label  { font-size: 1.25rem; font-weight: 700; }
+    .result-model  { font-size: .75rem; color: var(--muted); }
+
+    /* ── Confidence gauge ── */
+    .gauge-wrap { margin: 18px 0 10px; }
+    .gauge-label { display: flex; justify-content: space-between;
+                   font-size: .78rem; color: var(--muted); margin-bottom: 6px; }
+    .gauge-track {
+      height: 12px; background: var(--border);
+      border-radius: 999px; overflow: hidden;
+    }
+    .gauge-fill {
+      height: 100%; border-radius: 999px;
+      transition: width .8s cubic-bezier(.4,0,.2,1);
+      width: 0%;
+    }
+
+    /* ── History ── */
+    #history-list { display: flex; flex-direction: column; gap: 8px; }
+    .hist-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px;
+      font-size: .8rem;
+      animation: fadeIn .3s ease;
+    }
+    .hist-item .h-name { flex: 1; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hist-item .h-label { font-weight: 500; }
+    .hist-item .h-conf  { color: var(--muted); min-width: 46px; text-align: right; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: 12px 16px; border-radius: 10px;
+      font-size: .85rem; margin-top: 14px;
+      display: none;
+    }
+    .alert-error { background: rgba(248,113,113,.12); border: 1px solid var(--danger); color: var(--danger); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.6;} }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🌿</div>
+  <div class="header-text">
+    <h1>Olive Leaf Disease Detector</h1>
+    <p>Détection de l'Œil de Paon — <em>Spilocaea oleagina</em> — par Deep Learning</p>
+  </div>
+</header>
+
+<main>
+  <!-- ── LEFT COLUMN ── -->
+  <div>
+    <!-- Upload -->
+    <div class="card" style="margin-bottom:22px;">
+      <p class="card-title">📁 Image à analyser</p>
+
+      <div id="drop-zone">
+        <div class="upload-icon">🍃</div>
+        <p><strong>Glissez une image ici</strong></p>
+        <p style="margin-top:6px;">ou cliquez pour choisir un fichier</p>
+        <p style="margin-top:10px;font-size:.72rem;color:#64748b;">JPG · PNG · BMP · WebP</p>
+        <input type="file" id="file-input" accept="image/*"/>
+      </div>
+
+      <div id="preview-area">
+        <img id="preview-img" src="" alt="Aperçu"/>
+      </div>
+
+      <div class="alert alert-error" id="error-alert"></div>
+    </div>
+
+    <!-- Result -->
+    <div class="card" id="result-card">
+      <p class="card-title">📊 Résultat de l'analyse</p>
+      <div class="result-header">
+        <span class="result-emoji" id="res-emoji"></span>
+        <div>
+          <div class="result-label" id="res-label"></div>
+          <div class="result-model" id="res-model"></div>
+        </div>
+      </div>
+
+      <div class="gauge-wrap">
+        <div class="gauge-label">
+          <span>Confiance</span>
+          <span id="res-conf-text" style="font-weight:600;"></span>
+        </div>
+        <div class="gauge-track">
+          <div class="gauge-fill" id="res-gauge"></div>
+        </div>
+      </div>
+
+      <img id="res-img" src="" alt="Image analysée"
+           style="width:100%;border-radius:10px;border:1px solid var(--border);margin-top:14px;display:none;max-height:280px;object-fit:contain;"/>
+    </div>
+  </div>
+
+  <!-- ── RIGHT COLUMN ── -->
+  <div style="display:flex;flex-direction:column;gap:22px;">
+
+    <!-- Settings -->
+    <div class="card">
+      <p class="card-title">⚙️ Paramètres</p>
+
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Choisir le modèle :</p>
+      <div class="model-grid">
+        <button class="model-btn" id="btn-m1" data-model="1" onclick="selectModel(1)">
+          <div class="m-name">Modèle 1</div>
+          <div class="m-acc">CNN Basique · ~85%</div>
+        </button>
+        <button class="model-btn active" id="btn-m2" data-model="2" onclick="selectModel(2)">
+          <div class="m-name">Modèle 2 ✨</div>
+          <div class="m-acc">MobileNetV2 · ~95%</div>
+        </button>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">
+          <span>Seuil "Malade"</span>
+          <span id="lbl-high">0.75</span>
+        </div>
+        <input type="range" id="sl-high" min="0.5" max="1" step="0.01" value="0.75"
+               oninput="document.getElementById('lbl-high').textContent=parseFloat(this.value).toFixed(2)"/>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">
+          <span>Seuil "Saine"</span>
+          <span id="lbl-low">0.25</span>
+        </div>
+        <input type="range" id="sl-low" min="0" max="0.5" step="0.01" value="0.25"
+               oninput="document.getElementById('lbl-low').textContent=parseFloat(this.value).toFixed(2)"/>
+      </div>
+
+      <button id="submit-btn" onclick="submitImage()" disabled>
+        <span class="spinner" id="spinner"></span>
+        <span id="btn-text">🔍 Analyser l'image</span>
+      </button>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <p class="card-title">🕓 Historique de session</p>
+      <div id="history-list">
+        <p style="font-size:.8rem;color:var(--muted);text-align:center;padding:12px 0;">
+          Aucune analyse pour le moment.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  let selectedModel = 2;
+  let selectedFile  = null;
+
+  // ── Model selection ──────────────────────────────────────
+  function selectModel(n) {
+    selectedModel = n;
+    document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-m${n}`).classList.add('active');
+  }
+
+  // ── Drop zone ────────────────────────────────────────────
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click',      () => fileInput.click());
+  dropZone.addEventListener('dragover',   e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave',  () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showError("Veuillez sélectionner une image valide.");
+      return;
+    }
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const prev = document.getElementById('preview-img');
+      prev.src = ev.target.result;
+      document.getElementById('preview-area').style.display = 'block';
+      document.getElementById('result-card').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    document.getElementById('submit-btn').disabled = false;
+    hideError();
+  }
+
+  // ── Submit ───────────────────────────────────────────────
+  async function submitImage() {
+    if (!selectedFile) return;
+
+    const btn     = document.getElementById('submit-btn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btn-text');
+
+    btn.disabled  = true;
+    spinner.style.display = 'block';
+    btnText.textContent   = 'Analyse en cours…';
+    hideError();
+
+    const form = new FormData();
+    form.append('file', selectedFile);
+    form.append('model', selectedModel);
+    form.append('threshold_high', document.getElementById('sl-high').value);
+    form.append('threshold_low',  document.getElementById('sl-low').value);
+
+    try {
+      const resp = await fetch('/predict', { method: 'POST', body: form });
+      const data = await resp.json();
+
+      if (data.error) { showError(data.error); return; }
+
+      showResult(data);
+      addToHistory(data, selectedFile.name);
+
+    } catch(err) {
+      showError("Erreur de connexion au serveur.");
+    } finally {
+      btn.disabled  = false;
+      spinner.style.display = 'none';
+      btnText.textContent   = '🔍 Analyser l\'image';
+    }
+  }
+
+  // ── Show result ──────────────────────────────────────────
+  function showResult(data) {
+    document.getElementById('result-card').style.display = 'block';
+    document.getElementById('res-emoji').textContent  = data.emoji;
+    document.getElementById('res-label').textContent  = data.label;
+    document.getElementById('res-label').style.color  = data.color;
+    document.getElementById('res-model').textContent  = `Modèle: ${data.model_name}`;
+    document.getElementById('res-conf-text').textContent = data.confidence_pct;
+    document.getElementById('res-conf-text').style.color = data.color;
+
+    const gauge = document.getElementById('res-gauge');
+    gauge.style.background = data.color;
+    gauge.style.width = '0%';
+    setTimeout(() => { gauge.style.width = (data.confidence * 100) + '%'; }, 50);
+
+    const img = document.getElementById('res-img');
+    img.src = `data:image/jpeg;base64,${data.image_b64}`;
+    img.style.display = 'block';
+
+    document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── History ──────────────────────────────────────────────
+  function addToHistory(data, filename) {
+    const list = document.getElementById('history-list');
+    // Remove "empty" message if present
+    const empty = list.querySelector('p');
+    if (empty) empty.remove();
+
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    item.innerHTML = `
+      <span style="font-size:1.1rem">${data.emoji}</span>
+      <span class="h-name" title="${filename}">${filename}</span>
+      <span class="h-label" style="color:${data.color}">${data.label}</span>
+      <span class="h-conf">${data.confidence_pct}</span>
+      <span style="color:var(--muted);font-size:.7rem">${data.timestamp}</span>
+    `;
+    list.insertBefore(item, list.firstChild);
+
+    // Keep max 10
+    while (list.children.length > 10) list.removeChild(list.lastChild);
+  }
+
+  // ── Utils ────────────────────────────────────────────────
+  function showError(msg) {
+    const el = document.getElementById('error-alert');
+    el.textContent = '⚠️ ' + msg;
+    el.style.display = 'block';
+  }
+  function hideError() {
+    document.getElementById('error-alert').style.display = 'none';
+  }
+</script>
+</body>
+</html>

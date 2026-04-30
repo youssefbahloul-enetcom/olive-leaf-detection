@@ -1,34 +1,34 @@
-# 🌿 Olive Leaf Disease Detection
+# Olive Leaf Disease Detection
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10+-orange.svg)](https://www.tensorflow.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.3+-lightgrey.svg)](https://flask.palletsprojects.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-> Detect "Peacock Eye" disease (œil de paon) on olive leaves using Deep Learning
+> Detect "Peacock Eye" disease (*Spilocaea oleagina*) on olive leaves using Deep Learning — with real-time webcam detection and a full web interface.
 
-## 📌 Description
+## Description
 
-This project uses a Convolutional Neural Network (CNN) to detect the "Peacock Eye" disease (*Spilocaea oleagina*) on olive leaves. The model classifies leaves as either **Healthy** or **Infected** (Peacock Eye).
+This project uses Convolutional Neural Networks to classify olive leaves as **Healthy** or **Infected** (Peacock Eye / Oeil de Paon). It includes two trained models, a real-time webcam detector, a web interface for image upload, a batch prediction tool, and an evaluation script.
 
-The project includes two models :
-- **Model 1**: Basic CNN architecture (simple Conv2D layers)
-- **Model 2**: Transfer Learning with MobileNetV2 (recommended - better accuracy)
+## Models
 
-## 🧠 Technologies
+| Model | Architecture | Validation Accuracy |
+|-------|-------------|---------------------|
+| Model 1 | Basic CNN (Conv2D from scratch) | ~85% |
+| Model 2 | Transfer Learning — MobileNetV2 | ~95% ✅ Recommended |
+
+## Technologies
 
 - **Python** 3.8+
-- **TensorFlow / Keras** - Deep Learning framework
-- **OpenCV** - Image processing
-- **MobileNetV2** - Pre-trained model for transfer learning
+- **TensorFlow / Keras** — Deep Learning
+- **MobileNetV2** — Transfer Learning
+- **OpenCV** — Image processing & webcam
+- **Flask** — Web interface
+- **NumPy / Matplotlib** — Data processing & visualization
+- **scikit-learn** — Evaluation metrics
 
-## 📊 Results
-
-| Model | Validation Accuracy |
-|-------|---------------------|
-| Model 1 (Basic CNN) | ~85% |
-| Model 2 (MobileNetV2) | ~95% |
-
-## 🚀 Installation
+## Installation
 
 1. Clone the repository:
 ```bash
@@ -36,10 +36,11 @@ git clone https://github.com/your-username/olive-disease-detection.git
 cd olive-disease-detection
 ```
 
-2. Create a virtual environment (optional but recommended):
+2. Create a virtual environment (recommended):
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+venv\Scripts\activate   # Windows
+# source venv/bin/activate  # Linux/Mac
 ```
 
 3. Install dependencies:
@@ -47,107 +48,125 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 💻 Usage
+## Usage
 
-### Running the real-time detection:
+### Web Interface (recommended)
+
+Launch the Flask web application and open it in your browser:
+
 ```bash
-python run_projet.py
+python app.py
 ```
 
-Press `q` to quit the application.
+Then navigate to `http://localhost:5000`.
 
-### Using the model in your own code:
-```python
-import cv2
-import numpy as np
-from tensorflow.keras.models import load_model
+Features:
+- Drag and drop image upload
+- Model selection (Model 1 or Model 2)
+- Adjustable confidence thresholds via sliders
+- Animated confidence gauge
+- Session history of the last 10 predictions
 
-# Load the trained model
-model = load_model("peacock_model2.h5")
+---
 
-# Prepare image
-img = cv2.resize(image, (224, 224))
-img = img / 255.0
-img = np.expand_dims(img, axis=0)
+### Real-Time Webcam Detection
 
-# Predict
-prediction = model.predict(img, verbose=0)
-confidence = prediction[0][0]
-
-if confidence > 0.75:
-    result = "Infected: Peacock Eye"
-elif confidence < 0.25:
-    result = "Healthy"
+```bash
+python run_projet.py                    # Model 2 by default
+python run_projet.py --model 1          # Use basic CNN
+python run_projet.py --camera 1         # Use external camera
+python run_projet.py --threshold-high 0.8 --threshold-low 0.2
 ```
 
-## 📁 Project Structure
+Keyboard shortcuts during detection:
+
+| Key | Action |
+|-----|--------|
+| `q` | Quit |
+| `s` | Save screenshot to `screenshots/` folder |
+| `m` | Switch between models |
+| `p` | Pause / Resume detection |
+
+---
+
+### Static Image Prediction
+
+Run predictions on a single image or an entire folder:
+
+```bash
+python predict_image.py --input test/
+python predict_image.py --input my_leaf.jpg --show
+python predict_image.py --input test/ --model 1 --output results.csv
+```
+
+Results are exported to a CSV file automatically.
+
+---
+
+### Evaluation Script
+
+Evaluate model performance on a folder of images:
+
+```bash
+python evaluate.py                      # Model 2 on test/ folder
+python evaluate.py --model 1
+python evaluate.py --both               # Compare both models
+python evaluate.py --folder data_olive_peacock_spot
+```
+
+Outputs a terminal report and saves a visual prediction montage as a PNG file.
+
+## Project Structure
 
 ```
 olive-disease-detection/
-├── README.md                 # This file
-├── requirements.txt         # Python dependencies
-├── LICENSE                 # MIT License
-├── run_projet.py            # Main script for real-time detection
-├── peacock_model2.h5       # Trained model (MobileNetV2)
-├── peacock_model1.h5       # Trained model (Basic CNN)
-├── oeil_de_paon(model1).ipynb    # Model 1 training notebook
-├── oirl_de_paon(model2).ipynb   # Model 2 training notebook
-└── TODO.md                 # Development tasks
+├── app.py                        # Flask web application
+├── run_projet.py                 # Real-time webcam detection
+├── predict_image.py              # Static image / batch prediction
+├── evaluate.py                   # Model evaluation and reporting
+├── requirements.txt              # Python dependencies
+├── LICENSE
+├── README.md
+├── templates/
+│   └── index.html                # Web interface frontend
+├── peacock_model1.h5             # Trained Model 1 (Basic CNN)
+├── peacock_model2.h5             # Trained Model 2 (MobileNetV2)
+├── oeil_de_paon(model1).ipynb    # Training notebook — Model 1
+├── oirl_de_paon(model2).ipynb    # Training notebook — Model 2
+├── data_olive_peacock_spot/      # Dataset
+├── test/                         # Test images
+└── screenshots/                  # Auto-created by webcam script
 ```
 
-## 🔬 Model Details
+## Model Details
 
-### Model 2 Architecture (Recommended)
-- **Base Model**: MobileNetV2 (pre-trained on ImageNet)
-- **Feature Extraction**: Global Average Pooling
-- **Dense Layers**: 128 units with ReLU activation
-- **Dropout**: 0.5 for regularization
-- **Output**: Sigmoid activation for binary classification
+### Model 2 — MobileNetV2 (Recommended)
 
-### Training Parameters
-- **Image Size**: 224x224
-- **Batch Size**: 16
-- **Learning Rate**: 0.0001
-- **Optimizer**: Adam
+- **Base**: MobileNetV2 pre-trained on ImageNet
+- **Head**: Global Average Pooling → Dense (128, ReLU) → Dropout (0.5) → Sigmoid
+- **Input size**: 224 × 224
+- **Optimizer**: Adam — Learning rate: 0.0001
 - **Loss**: Binary Crossentropy
 
-## 🤝 Contributing
+## Future Improvements
+
+- Add a "no leaf detected" class for improved robustness
+- Integrate object detection before classification
+- Deploy as a cloud API (Docker + REST)
+- Mobile application
+
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m 'Add my feature'`)
+4. Push to the branch (`git push origin feature/my-feature`)
 5. Open a Pull Request
 
-## 📝 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🔧 Project Structure
-
-```
-olive-disease-detection/
-├── .gitignore              # Git ignore rules
-├── LICENSE                # MIT License
-├── README.md               # This file
-├── requirements.txt       # Python dependencies
-├── run_projet.py           # Main script for real-time detection
-├── peacock_model1.h5       # Trained model (Basic CNN)
-├── peacock_model2.h5       # Trained model (MobileNetV2)
-├── oeil_de_paon(model1).ipynb    # Model 1 training notebook
-├── oirl_de_paon(model2).ipynb   # Model 2 training notebook
-├── data_olive_peacock_spot/     # Dataset folder
-├── test/                   # Test images
-└── TODO.md                 # Development tasks
-```
-
-## 🙏 Acknowledgments
-
-- Dataset source: [Describe your dataset source]
-- Inspired by: [Any inspiring projects or papers]
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-⭐ If you find this project useful, please give it a star!
+If you find this project useful, please consider giving it a star on GitHub.
